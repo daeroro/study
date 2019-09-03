@@ -98,7 +98,7 @@ alternative_else_nop_endif
 
 0:
 	/*
-	 * Either we've just detected an overflow, or we've taken an exception
+	 * Either we've just detected an ov|()|el1|()rflow, or we've taken an exception
 	 * while on the overflow stack. Either way, we won't return to
 	 * userspace, and can clobber EL0 registers to free up GPRs.
 	 */
@@ -326,14 +326,14 @@ alternative_else_nop_endif
 	b.eq	3f
 
 #ifdef CONFIG_ARM64_ERRATUM_845719
-alternative_if ARM64_WORKAROUND_845719
-#ifdef CONFIG_PID_IN_CONTEXTIDR
-	mrs	x29, contextidr_el1
-	msr	contextidr_el1, x29
-#else
-	msr contextidr_el1, xzr
-#endif
-alternative_else_nop_endif
+	alternative_if ARM64_WORKAROUND_845719
+	#ifdef CONFIG_PID_IN_CONTEXTIDR
+		mrs	x29, contextidr_el1
+		msr	contextidr_el1, x29
+	#else
+		msr contextidr_el1, xzr
+	#endif
+	lternative_else_nop_endif
 #endif
 3:
 	apply_ssbd 0, x0, x1
@@ -360,16 +360,16 @@ alternative_else_nop_endif
 	add	sp, sp, #S_FRAME_SIZE		// restore sp
 
 	.if	\el == 0
-alternative_insn eret, nop, ARM64_UNMAP_KERNEL_AT_EL0
-#ifdef CONFIG_UNMAP_KERNEL_AT_EL0
-	bne	4f
-	msr	far_el1, x30
-	tramp_alias	x30, tramp_exit_native
-	br	x30
+		alternative_insn eret, nop, ARM64_UNMAP_KERNEL_AT_EL0
+		#ifdef CONFIG_UNMAP_KERNEL_AT_EL0
+			bne	4f
+			msr	far_el1, x30
+			tramp_alias	x30, tramp_exit_native
+			br	x30
 4:
-	tramp_alias	x30, tramp_exit_compat
-	br	x30
-#endif
+			tramp_alias	x30, tramp_exit_compat
+			br	x30
+		#endif
 	.else
 	eret
 	.endif
